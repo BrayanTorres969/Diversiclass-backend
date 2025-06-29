@@ -1,10 +1,11 @@
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, status
-from pathlib import Path
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException, status,Path
+from pathlib import Path as FilePath # ESTE ES IMPORTANTE
 from typing import List
 from app.services.firebase import bucket
 from app.services.document_service import save_to_firestore
 from app.services.npl_service import quiz_generator 
-from app.services.file_processor import extract_text_from_file 
+from app.services.file_processor import extract_text_from_file
+from app.services.document_service import get_quizzes_by_document
 from app.models.document import DocumentResponse
 from app.models.quiz import QuizResponse
 
@@ -57,7 +58,7 @@ async def upload_document_and_generate_questions(
     """
     try:
         # 1. Validar formato
-        file_extension = Path(file.filename).suffix.lower()
+        file_extension = FilePath(file.filename).suffix.lower()
         valid_extensions = ['.pdf', '.docx', '.pptx']
 
         #logger.info(f"Procesando archivo: {file.filename}")
@@ -86,7 +87,7 @@ async def upload_document_and_generate_questions(
         )
         #logger.info(f"Número de quizzes generados: {len(quizzes)}")
 
-        title = Path(file.filename).stem 
+        title = FilePath(file.filename).stem 
         
         # 4. Guardar en Firestore
         return await save_to_firestore(
@@ -112,3 +113,21 @@ async def upload_document_and_generate_questions(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error interno al procesar documento: {str(e)}"
         )
+    
+
+@router.get(
+    "/{document_id}/quizzes",
+    response_model=List[QuizResponse],
+    summary="Obtener preguntas generadas de un documento"
+)
+async def get_document_quizzes(
+    course_id: str = Path(..., description="ID del curso"),
+    document_id: str = Path(..., description="ID del documento")
+):
+    """
+    Devuelve todas las preguntas generadas para un documento específico.
+    """
+    try:
+        return await get_quizzes_by_document(course_id, document_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))

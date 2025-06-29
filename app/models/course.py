@@ -17,8 +17,7 @@ class CourseCreate(CourseBase):
 
 class CourseResponse(CourseBase, TimestampMixin, OwnerMixin):
     """Modelo completo para respuesta, incluye timestamps y owner"""
-    id: str = Field(..., alias="_id")
-    _id: str = Field(None, exclude=True)  # Campo interno opcional
+    id: str  # sin alias
 
 class CourseUpdate(BaseModel):
     title: Optional[str] = Field(None, min_length=3, max_length=100)

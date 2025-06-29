@@ -120,3 +120,36 @@ async def save_to_firestore(
         ],
         **document_data
     )
+
+async def get_quizzes_by_document(course_id: str, document_id: str) -> List[QuizResponse]:
+    try:
+        quizzes_ref = db.collection("courses").document(course_id).collection("documents").document(document_id).collection("quizzes")
+        docs = quizzes_ref.stream()
+
+        quizzes = []
+
+
+        for quiz_doc in quizzes_ref.stream():
+            quiz_data = quiz_doc.to_dict()
+            quiz_id = quiz_doc.id
+
+            # Leer opciones de este quiz
+            options_ref = quiz_doc.reference.collection("options")
+            options = []
+
+            for option_doc in options_ref.stream():
+                option_data = option_doc.to_dict()
+                option_data["optionId"] = option_doc.id
+                options.append(OptionResponse(**option_data))
+
+            # Agregar alias esperados
+            quiz_data["quizId"] = quiz_id
+            quiz_data["createdAt"] = quiz_data.get("createdAt", datetime.utcnow())
+            quiz_data["options"] = options
+
+            quizzes.append(QuizResponse(**quiz_data))
+        
+        return quizzes
+
+    except Exception as e:
+        raise ValueError(f"No se pudieron obtener los quizzes: {str(e)}")
