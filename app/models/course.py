@@ -17,7 +17,9 @@ class CourseCreate(CourseBase):
 
 class CourseResponse(CourseBase, TimestampMixin, OwnerMixin):
     """Modelo completo para respuesta, incluye timestamps y owner"""
-    id: str  # sin alias
+    id: str = Field(..., alias="id")
+    class Config:
+        allow_population_by_field_name = True  # Permite usar alias  # sin alias cambio esta parte se rompe
 
 class CourseUpdate(BaseModel):
     title: Optional[str] = Field(None, min_length=3, max_length=100)

@@ -21,12 +21,12 @@ async def create_course(course_data: CourseCreate,owner_id: str = Depends(get_cu
             detail=str(e)
         )
 
-@router.get("/user/me", response_model=List[CourseResponse])
-async def get_my_courses(
-    user_id: str = Depends(get_current_user)
-):
+@router.get("/user/me")
+async def get_my_courses(user_id: str = Depends(get_current_user)):
     try:
+        # Llama al servicio y devuelve directamente (sin parseo intermedio)
         return CourseService.get_courses_by_user(user_id)
+        
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -41,3 +41,11 @@ def get_course(course_id: str,user_id: str = Depends(get_current_user)):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e))
+    
+
+@router.get("/{course_id}/documents")
+async def get_documents_by_course(course_id: str):
+    try:
+        return CourseService.get_documents_by_course(course_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
